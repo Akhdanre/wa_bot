@@ -6,6 +6,7 @@ import { echoCommand } from "./commands/echo.command";
 import { topYappingCommand } from "./commands/top-yapping.command";
 import { topToxicCommand } from "./commands/top-toxic.command";
 import { topStickerCommand } from "./commands/top-sticker.command";
+import { levelCommand } from "./commands/level.command";
 import { UserRepository } from "./user.repository";
 import { GroupRepository } from "./group.repository";
 import { StatRepository } from "./stat.repository";
@@ -36,6 +37,9 @@ export class MessageService {
                 break;
             case "!top-sticker":
                 await topStickerCommand(message);
+                break;
+            case "!level":
+                await levelCommand(message);
                 break;
             default:
                 //     logger.info("MessageService", `Unhandled message: ${body}`);

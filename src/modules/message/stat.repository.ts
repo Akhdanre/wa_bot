@@ -40,4 +40,10 @@ export class StatRepository {
             include: { user: true },
         });
     }
+
+    async getUserStat(userId: number, groupId: number) {
+        return prisma.stat.findUnique({
+            where: { userId_groupId: { userId, groupId } },
+        });
+    }
 }
