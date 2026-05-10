@@ -3,3 +3,5 @@ dist/
 .wwebjs_auth/
 .wwebjs_cache/
 .env
+
+/src/generated/prisma

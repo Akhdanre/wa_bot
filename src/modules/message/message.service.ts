@@ -1,0 +1,60 @@
+import { Message } from "whatsapp-web.js";
+import { logger } from "../../infrastructure/logger";
+import { countBadWords } from "../../infrastructure/profanity";
+import { pingCommand } from "./commands/ping.command";
+import { echoCommand } from "./commands/echo.command";
+import { topYappingCommand } from "./commands/top-yapping.command";
+import { topToxicCommand } from "./commands/top-toxic.command";
+import { UserRepository } from "./user.repository";
+import { GroupRepository } from "./group.repository";
+import { StatRepository } from "./stat.repository";
+
+const userRepo = new UserRepository();
+const groupRepo = new GroupRepository();
+const statRepo = new StatRepository();
+
+export class MessageService {
+    async handle(message: Message) {
+        await this.track(message);
+
+        const body = message.body.trim();
+        const command = body.split(" ")[0].toLowerCase();
+
+        switch (command) {
+            case "!ping":
+                await pingCommand(message);
+                break;
+            case "!echo":
+                await echoCommand(message, body.slice(6));
+                break;
+            case "!top-yapping":
+                await topYappingCommand(message);
+                break;
+            case "!top-toxic":
+                await topToxicCommand(message);
+                break;
+            default:
+                logger.info("MessageService", `Unhandled message: ${body}`);
+        }
+    }
+
+    private async track(message: Message) {
+        const chat = await message.getChat();
+        if (!chat.isGroup) return;
+
+        const contact = await message.getContact();
+        const waId = contact.id._serialized;
+        const userName = contact.pushname;
+        const groupId = chat.id._serialized;
+        const groupName = chat.name;
+        const body = message.body.trim();
+        const textLength = body.length;
+        const badWordCount = countBadWords(body);
+
+        const user = await userRepo.upsert(waId, userName);
+        const group = await groupRepo.upsert(groupId, groupName);
+        await statRepo.increment(user.id, group.id, textLength, badWordCount);
+
+        // logger.debug("MessageService", `Tracked: ${waId} in ${groupId}`);
+    }
+}

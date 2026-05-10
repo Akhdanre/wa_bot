@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Stat" ADD COLUMN     "totalBadWord" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "totalText" INTEGER NOT NULL DEFAULT 0;
