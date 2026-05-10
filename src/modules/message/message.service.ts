@@ -23,22 +23,22 @@ export class MessageService {
         const command = body.split(" ")[0].toLowerCase();
 
         switch (command) {
-            case "!ping":
+            case "ar.ping":
                 await pingCommand(message);
                 break;
-            case "!echo":
+            case "ar.echo":
                 await echoCommand(message, body.slice(6));
                 break;
-            case "!top-yapping":
+            case "ar.top-yapping":
                 await topYappingCommand(message);
                 break;
-            case "!top-toxic":
+            case "ar.top-toxic":
                 await topToxicCommand(message);
                 break;
-            case "!top-sticker":
+            case "ar.top-sticker":
                 await topStickerCommand(message);
                 break;
-            case "!level":
+            case "ar.level":
                 await levelCommand(message);
                 break;
             default:
