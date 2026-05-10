@@ -5,6 +5,7 @@ import { pingCommand } from "./commands/ping.command";
 import { echoCommand } from "./commands/echo.command";
 import { topYappingCommand } from "./commands/top-yapping.command";
 import { topToxicCommand } from "./commands/top-toxic.command";
+import { topStickerCommand } from "./commands/top-sticker.command";
 import { UserRepository } from "./user.repository";
 import { GroupRepository } from "./group.repository";
 import { StatRepository } from "./stat.repository";
@@ -33,8 +34,12 @@ export class MessageService {
             case "!top-toxic":
                 await topToxicCommand(message);
                 break;
+            case "!top-sticker":
+                await topStickerCommand(message);
+                break;
             default:
-                logger.info("MessageService", `Unhandled message: ${body}`);
+                //     logger.info("MessageService", `Unhandled message: ${body}`);
+                break;
         }
     }
 
@@ -50,11 +55,10 @@ export class MessageService {
         const body = message.body.trim();
         const textLength = body.length;
         const badWordCount = countBadWords(body);
+        const isSticker = message.type === "sticker";
 
         const user = await userRepo.upsert(waId, userName);
         const group = await groupRepo.upsert(groupId, groupName);
-        await statRepo.increment(user.id, group.id, textLength, badWordCount);
-
-        // logger.debug("MessageService", `Tracked: ${waId} in ${groupId}`);
+        await statRepo.increment(user.id, group.id, textLength, badWordCount, isSticker);
     }
 }
