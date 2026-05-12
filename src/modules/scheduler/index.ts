@@ -32,7 +32,7 @@ async function sendSummaries() {
 
 export function startScheduler() {
     // Testing: every 10 seconds
-    cron.schedule("*/10 * * * * *", () => {
+    cron.schedule("*/5 * * * *", () => {
         logger.info("Scheduler", "Cron triggered, starting summary job...");
         sendSummaries();
     }, { timezone: "Asia/Jakarta" });
