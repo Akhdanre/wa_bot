@@ -1,7 +1,7 @@
 import type { PodiumWinner } from "../types/leaderboard";
 import { drawGlow, roundedRect } from "../canvas/utils";
 
-function drawBadge(
+export function drawBadge(
   context: CanvasRenderingContext2D,
   x: number,
   y: number,
@@ -18,7 +18,7 @@ function drawBadge(
   context.fillText(label, x, y + 6);
 }
 
-function drawAvatar(
+export function drawAvatar(
   context: CanvasRenderingContext2D,
   x: number,
   y: number,
@@ -74,7 +74,7 @@ function drawAvatar(
   context.stroke();
 }
 
-function drawCrown(context: CanvasRenderingContext2D, x: number, y: number) {
+export function drawCrown(context: CanvasRenderingContext2D, x: number, y: number) {
   context.save();
   context.translate(x, y);
   context.fillStyle = "#f6c667";
@@ -106,7 +106,6 @@ export function drawPodiumBlock(
   height: number,
   fillTop: string,
   fillFace: string,
-  label: string,
 ) {
   roundedRect(context, x, y, width, height, 26);
   context.fillStyle = fillFace;
@@ -115,7 +114,6 @@ export function drawPodiumBlock(
   roundedRect(context, x, y, width, 24, 18);
   context.fillStyle = fillTop;
   context.fill();
-
 }
 
 export function drawWinnerCard(

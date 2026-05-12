@@ -1,43 +1,11 @@
 import type { AwardsSceneData, LeaderboardCategory, LeaderboardMetric, PodiumWinner } from "../types/leaderboard";
+import { leaderboardMeta } from "./leaderboardMeta";
 
 const palette = [
   { accent: "#f6c667", shadow: "rgba(246, 198, 103, 0.38)" },
   { accent: "#7dd3fc", shadow: "rgba(125, 211, 252, 0.32)" },
   { accent: "#c4b5fd", shadow: "rgba(196, 181, 253, 0.32)" },
 ] as const;
-
-const categoryMeta: Record<
-  LeaderboardCategory,
-  {
-    badge: string;
-    headline: string;
-    subheadline: string;
-    metricLabel: string;
-    titles: [string, string, string];
-  }
-> = {
-  yapping: {
-    badge: "Weekly Leaderboard",
-    headline: "Top Yapping",
-    subheadline: "The busiest voices in the group this week.",
-    metricLabel: "messages",
-    titles: ["Chat Monarch", "Reply Engine", "Conversation Spark"],
-  },
-  toxic: {
-    badge: "Weekly Leaderboard",
-    headline: "Top Toxic",
-    subheadline: "Who dropped the most spicy words this week.",
-    metricLabel: "bad words",
-    titles: ["Chaos Captain", "Salt Distributor", "Drama Supplier"],
-  },
-  sticker: {
-    badge: "Weekly Leaderboard",
-    headline: "Top Sticker",
-    subheadline: "The heaviest sticker senders of the week.",
-    metricLabel: "stickers",
-    titles: ["Sticker Emperor", "Meme Machine", "Reaction Dealer"],
-  },
-};
 
 const sampleEntries: Record<
   LeaderboardCategory,
@@ -81,7 +49,7 @@ export function buildAwardsScene(
   category: LeaderboardCategory,
   entries: LeaderboardMetric[],
 ): AwardsSceneData {
-  const meta = categoryMeta[category];
+  const meta = leaderboardMeta[category];
 
   const winners = ([1, 2, 3] as const).map((rank) => {
     const entry = entries[rank - 1];

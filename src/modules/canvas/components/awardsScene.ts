@@ -3,7 +3,7 @@ import { drawGlow, roundedRect } from "../canvas/utils";
 import type { AwardsSceneData } from "../types/leaderboard";
 import { drawPodiumBlock, drawWinnerCard } from "./winnerPodium";
 
-function drawStars(context: CanvasRenderingContext2D) {
+export function drawStars(context: CanvasRenderingContext2D) {
   for (let index = 0; index < 26; index += 1) {
     const x = 70 + ((index * 137) % (CANVAS_SIZE - 140));
     const y = 60 + ((index * 89) % 180);
@@ -66,7 +66,6 @@ export function drawAwardsScene(
       height: 220,
       top: "#3d5878",
       face: "#27354f",
-      label: "2",
       winner: scene.winners[1],
     },
     {
@@ -76,7 +75,6 @@ export function drawAwardsScene(
       height: 320,
       top: "#8d6b24",
       face: "#5f4314",
-      label: "1",
       winner: scene.winners[0],
     },
     {
@@ -86,7 +84,6 @@ export function drawAwardsScene(
       height: 190,
       top: "#65508a",
       face: "#3c3157",
-      label: "3",
       winner: scene.winners[2],
     },
   ] as const;
@@ -100,7 +97,6 @@ export function drawAwardsScene(
       block.height,
       block.top,
       block.face,
-      block.label,
     );
     drawWinnerCard(context, block.winner, block.x + block.width / 2, block.y, block.height);
   }

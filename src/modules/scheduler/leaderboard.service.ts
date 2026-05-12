@@ -2,37 +2,9 @@ import { StatRepository } from "../message/stat.repository";
 import type { StatLeaderboardRow } from "../message/stat.repository";
 import type { LeaderboardCategory, LeaderboardMetric } from "../canvas/types/leaderboard";
 import { buildAwardsScene } from "../canvas/data/winners";
+import { leaderboardMeta } from "../canvas/data/leaderboardMeta";
 
 const statRepo = new StatRepository();
-
-const summaryMeta: Record<
-  LeaderboardCategory,
-  {
-    emoji: string;
-    label: string;
-    empty: string;
-    metricLabel: string;
-  }
-> = {
-  yapping: {
-    emoji: "🏆",
-    label: "Top Yapping",
-    empty: "No data yet.",
-    metricLabel: "messages",
-  },
-  toxic: {
-    emoji: "☠️",
-    label: "Top Toxic",
-    empty: "No data yet.",
-    metricLabel: "bad words",
-  },
-  sticker: {
-    emoji: "🎭",
-    label: "Top Sticker",
-    empty: "No data yet.",
-    metricLabel: "stickers",
-  },
-};
 
 function toMetric(category: LeaderboardCategory, stat: StatLeaderboardRow): LeaderboardMetric {
   if (category === "toxic") {
@@ -60,7 +32,7 @@ function formatSummaryLine(
   metric: LeaderboardMetric,
   index: number,
 ) {
-  const meta = summaryMeta[category];
+  const meta = leaderboardMeta[category];
   return `${index + 1}. ${metric.label} — ${metric.value} ${meta.metricLabel}`;
 }
 
@@ -86,7 +58,7 @@ export async function buildLeaderboardSection(
   category: LeaderboardCategory,
 ) {
   const metrics = await getLeaderboardMetrics(groupId, category);
-  const meta = summaryMeta[category];
+  const meta = leaderboardMeta[category];
 
   const text = metrics.length
     ? metrics.map((metric, index) => formatSummaryLine(category, metric, index)).join("\n")
