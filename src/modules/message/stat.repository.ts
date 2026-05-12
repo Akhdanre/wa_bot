@@ -1,5 +1,17 @@
 import { prisma } from "../../infrastructure/database";
 
+type UserSummary = {
+    name: string | null;
+    waId: string;
+};
+
+export type StatLeaderboardRow = {
+    user: UserSummary;
+    count: number;
+    totalBadWord: number;
+    totalSticker: number;
+};
+
 export class StatRepository {
     async increment(userId: number, groupId: number, textLength: number, badWordCount: number, isSticker: boolean) {
         return prisma.stat.upsert({
@@ -14,31 +26,31 @@ export class StatRepository {
         });
     }
 
-    async getTopByGroup(groupId: number, limit = 3) {
+    async getTopByGroup(groupId: number, limit = 3): Promise<StatLeaderboardRow[]> {
         return prisma.stat.findMany({
             where: { groupId },
             orderBy: { count: "desc" },
             take: limit,
             include: { user: true },
-        });
+        }) as Promise<StatLeaderboardRow[]>;
     }
 
-    async getTopBadWordByGroup(groupId: number, limit = 3) {
+    async getTopBadWordByGroup(groupId: number, limit = 3): Promise<StatLeaderboardRow[]> {
         return prisma.stat.findMany({
             where: { groupId, totalBadWord: { gt: 0 } },
             orderBy: { totalBadWord: "desc" },
             take: limit,
             include: { user: true },
-        });
+        }) as Promise<StatLeaderboardRow[]>;
     }
 
-    async getTopStickerByGroup(groupId: number, limit = 3) {
+    async getTopStickerByGroup(groupId: number, limit = 3): Promise<StatLeaderboardRow[]> {
         return prisma.stat.findMany({
             where: { groupId, totalSticker: { gt: 0 } },
             orderBy: { totalSticker: "desc" },
             take: limit,
             include: { user: true },
-        });
+        }) as Promise<StatLeaderboardRow[]>;
     }
 
     async getUserStat(userId: number, groupId: number) {

@@ -1,0 +1,154 @@
+:root {
+  color: #f6efe5;
+  font-family: "Trebuchet MS", "Avenir Next", sans-serif;
+  background:
+    radial-gradient(circle at top, rgba(255, 210, 133, 0.12), transparent 30%),
+    radial-gradient(circle at 20% 20%, rgba(108, 186, 255, 0.16), transparent 28%),
+    linear-gradient(180deg, #08101c 0%, #121521 45%, #1e1424 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+.award-page {
+  min-height: 100vh;
+  padding: 28px;
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+
+.hero-card {
+  width: min(1120px, 100%);
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 32px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
+    rgba(10, 15, 28, 0.68);
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+}
+
+.awards-canvas {
+  display: block;
+  width: 100%;
+  max-width: min(92vw, 1080px);
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  border-radius: 28px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.34);
+}
+
+.export-fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 10;
+  width: min(220px, calc(100vw - 32px));
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04)),
+    rgba(7, 11, 21, 0.84);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px);
+}
+
+.export-fab__label {
+  margin: 0 0 10px;
+  color: rgba(246, 239, 229, 0.86);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.export-fab__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.export-fab__button {
+  appearance: none;
+  border: 0;
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, #f6c667, #d89e39);
+  color: #101114;
+  font: inherit;
+  font-size: 0.94rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    opacity 140ms ease;
+  box-shadow: 0 12px 24px rgba(216, 158, 57, 0.24);
+}
+
+.export-fab__button:hover {
+  transform: translateY(-1px);
+}
+
+.export-fab__button:active {
+  transform: translateY(1px);
+}
+
+.export-fab__button:disabled {
+  opacity: 0.64;
+  cursor: wait;
+}
+
+.export-fab__button--secondary {
+  background: linear-gradient(135deg, #b7d9ff, #74a9ea);
+  box-shadow: 0 12px 24px rgba(116, 169, 234, 0.2);
+}
+
+.export-fab__status {
+  min-height: 1.1rem;
+  margin: 10px 2px 0;
+  color: rgba(246, 239, 229, 0.7);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 720px) {
+  .award-page {
+    padding: 16px;
+  }
+
+  .hero-card {
+    padding: 14px;
+    border-radius: 24px;
+  }
+
+  .export-fab {
+    right: 12px;
+    bottom: 12px;
+    width: min(210px, calc(100vw - 24px));
+    padding: 12px;
+    border-radius: 18px;
+  }
+}
