@@ -8,4 +8,12 @@ export class GroupRepository {
             create: { groupId, name },
         });
     }
+
+    async getSchedulerEnabled() {
+        return prisma.group.findMany({ where: { schedulerEnabled: true } });
+    }
+
+    async toggleScheduler(groupId: string, enabled: boolean) {
+        return prisma.group.update({ where: { groupId }, data: { schedulerEnabled: enabled } });
+    }
 }

@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: whatsapp_bot_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bot_user
+      POSTGRES_PASSWORD: bot_password
+      POSTGRES_DB: whatsapp_bot
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: whatsapp_bot_app
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgresql://bot_user:bot_password@postgres:5432/whatsapp_bot
+    volumes:
+      - wwebjs_auth:/app/.wwebjs_auth
+      - ./src:/app/src
+    command: sh -c "find /app/.wwebjs_auth -name 'SingletonLock' -delete 2>/dev/null; npx prisma migrate deploy && npx tsx watch src/index.ts"
+
+volumes:
+  pgdata:
+  wwebjs_auth:

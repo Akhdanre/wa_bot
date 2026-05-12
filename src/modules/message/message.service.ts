@@ -8,6 +8,7 @@ import { topToxicCommand } from "./commands/top-toxic.command";
 import { topStickerCommand } from "./commands/top-sticker.command";
 import { levelCommand } from "./commands/level.command";
 import { helpCommand } from "./commands/help.command";
+import { toggleSchedulerCommand } from "./commands/toggle-scheduler.command";
 import { UserRepository } from "./user.repository";
 import { GroupRepository } from "./group.repository";
 import { StatRepository } from "./stat.repository";
@@ -44,6 +45,9 @@ export class MessageService {
                 break;
             case "akr-help":
                 await helpCommand(message);
+                break;
+            case "akr-scheduler":
+                await toggleSchedulerCommand(message);
                 break;
             default:
                 //     logger.info("MessageService", `Unhandled message: ${body}`);

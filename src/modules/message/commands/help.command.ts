@@ -13,6 +13,9 @@ export async function helpCommand(message: Message) {
 │  • akr-level        — _Check your stats_
 │  • akr-help         — _Show this menu_
 │
+│  *Settings*
+│  • akr-scheduler    — _Toggle weekly summary_
+│
 │  *Minigames*
 │  • akr-fish         — _Coming soon!_
 │
