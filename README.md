@@ -6,24 +6,13 @@ A minimal WhatsApp bot using `whatsapp-web.js` with TypeScript.
 
 - QR code login in terminal
 - Persists session with LocalAuth
-- Commands: `!ping` and `!echo <text>`
+- Group message tracking (yapping, toxic, sticker stats)
+- Level system
 
 ## Prerequisites
 
 - Node.js 18+ recommended
-- On Linux, Puppeteer may need extra system libs. If Chromium fails to launch, try:
-
-```bash
-sudo apt-get update
-sudo apt-get install -y \
-  gconf-service libasound2 libatk1.0-0 libc6 libcairo2 libcups2 \
-  libdbus-1-3 libexpat1 libfontconfig1 libgcc1 libgconf-2-4 libgdk-pixbuf2.0-0 \
-  libglib2.0-0 libgtk-3-0 libnspr4 libpango-1.0-0 libpangocairo-1.0-0 \
-  libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 libxcursor1 \
-  libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 \
-  libxss1 libxtst6 ca-certificates fonts-liberation lsb-release \
-  xdg-utils wget
-```
+- Docker & Docker Compose (for deployment)
 
 ## Setup
 
@@ -39,18 +28,45 @@ Run in watch mode (displays QR in terminal on first run):
 npm run dev
 ```
 
-## Build and Start
+## Docker Deployment
 
 ```bash
-npm run build
-npm start
+docker compose up --build
 ```
+
+### Check QR Code for Authentication
+
+On first run (or after session reset), you need to scan the QR code from the container logs:
+
+```bash
+docker compose logs -f app
+```
+
+Look for the QR code output in the terminal and scan it with your WhatsApp app.
+
+### Reset Session
+
+If the bot is stuck (no "Client is ready!" log, no QR shown), the session is likely stale. Reset it:
+
+```bash
+docker compose down
+docker volume rm whatsapp_bot_wwebjs_auth
+docker compose up --build
+```
+
+Then scan the new QR code from the logs.
 
 ## Commands
 
-- `!ping` → replies `pong`
-- `!echo <text>` → replies with `<text>`
+- `akr-ping` → replies `Pong!`
+- `akr-echo <text>` → replies with `<text>`
+- `akr-top-yapping` → top chatters leaderboard
+- `akr-top-toxic` → top toxic users leaderboard
+- `akr-top-sticker` → top sticker senders leaderboard
+- `akr-level` → check your level
+- `akr-help` → show all available commands
 
 ## Session Notes
 
-- Auth data is stored in `.wwebjs_auth/` (git-ignored). Delete this folder to force re-login.
+- Auth data is stored in `.wwebjs_auth/` (git-ignored). Delete this folder (or the Docker volume) to force re-login.
+- On auth failure or disconnect, errors are logged automatically.
