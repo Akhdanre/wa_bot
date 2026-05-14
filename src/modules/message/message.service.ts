@@ -8,6 +8,7 @@ import { topToxicCommand } from "./commands/top-toxic.command";
 import { topStickerCommand } from "./commands/top-sticker.command";
 import { levelCommand } from "./commands/level.command";
 import { helpCommand } from "./commands/help.command";
+import { fishHelpCommand } from "./commands/fish-help.command";
 import { toggleSchedulerCommand } from "./commands/toggle-scheduler.command";
 import { catchCommand, fishCommand } from "./commands/fish.command";
 import { UserRepository } from "./user.repository";
@@ -46,6 +47,9 @@ export class MessageService {
                 break;
             case "akr-help":
                 await helpCommand(message);
+                break;
+            case "akr-fish-help":
+                await fishHelpCommand(message);
                 break;
             case "akr-scheduler":
                 await toggleSchedulerCommand(message);

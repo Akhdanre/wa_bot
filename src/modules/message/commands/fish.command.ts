@@ -96,8 +96,12 @@ async function startFishing(message: Message, userId: number) {
 
     const fishBox = generateFishBox(result.position);
 
+    // await message.reply(
+    //     `*Fish It*\n\`\`\`\n${fishBox}\n\`\`\`\nThe fish is in box ${result.position}.\nUse: akr-catch ${result.position}\n\nFish chance: ${formatPercent(result.rod.fishChance)}\nRod: Lv.${result.rod.level} ${result.rod.name} (${result.profile.rodHealth}/${result.rod.maxHealth})`
+    // );
+
     await message.reply(
-        `*Fish It*\n\`\`\`\n${fishBox}\n\`\`\`\nThe fish is in box ${result.position}.\nUse: akr-catch ${result.position}\n\nFish chance: ${formatPercent(result.rod.fishChance)}\nRod: Lv.${result.rod.level} ${result.rod.name} (${result.profile.rodHealth}/${result.rod.maxHealth})`
+        `*Fish It*\n\`\`\`\n${fishBox}\n\`\`\`\n`
     );
 }
 

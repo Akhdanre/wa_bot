@@ -4,29 +4,34 @@ export function generateFishBox(position: number): string {
     // 4 5 6
     // 7 8 9
 
-    const fish = "><(((('>";
-    const boxWidth = 11;
-    const cellHeight = 3;
+    const fish = "><(('>";
+    const boxWidth = 7;
+    const cellHeight = 2;
 
-    const horizontal = "+" + "-----------+".repeat(3);
+    const horizontal = "+" + "-------+".repeat(3);
 
-    function center(value: string) {
+    function center(value: string): string {
         const paddingLeft = Math.floor((boxWidth - value.length) / 2);
         const paddingRight = boxWidth - value.length - paddingLeft;
 
         return " ".repeat(paddingLeft) + value + " ".repeat(paddingRight);
     }
 
-    function createEmptyRow() {
+    function createEmptyRow(): string {
         return `|${center("")}|${center("")}|${center("")}|`;
     }
 
-    function createCenterRow(row: number) {
-        const cells = ["           ", "           ", "           "];
+    function createCenterRow(row: number): string {
+        const cells = ["       ", "       ", "       "];
 
         for (let col = 0; col < 3; col++) {
             const cellPosition = row * 3 + col + 1;
-            cells[col] = center(cellPosition === position ? fish : String(cellPosition));
+
+            cells[col] = center(
+                cellPosition === position
+                    ? fish
+                    : ""
+            );
         }
 
         return `|${cells[0]}|${cells[1]}|${cells[2]}|`;
