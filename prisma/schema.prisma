@@ -13,11 +13,12 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  waId      String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  stats     Stat[]
+  id          Int          @id @default(autoincrement())
+  waId        String       @unique
+  name        String?
+  createdAt   DateTime     @default(now())
+  stats       Stat[]
+  fishProfile FishProfile?
 }
 
 model Group {
@@ -46,3 +47,32 @@ model Stat {
   @@unique([userId, groupId])
 }
 
+model FishProfile {
+  id          Int             @id @default(autoincrement())
+  userId      Int             @unique
+  coins       Int             @default(0)
+  rodLevel    Int             @default(1)
+  rodHealth   Int             @default(10)
+  totalCaught Int             @default(0)
+  totalTrash  Int             @default(0)
+  totalSold   Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inventory FishInventory[]
+}
+
+model FishInventory {
+  id        Int         @id @default(autoincrement())
+  profileId Int
+  fishKey   String
+  quantity  Int         @default(0)
+  tankQuantity Int      @default(0)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  profile FishProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, fishKey])
+}

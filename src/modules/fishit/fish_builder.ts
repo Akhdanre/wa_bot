@@ -1,4 +1,4 @@
-function generateFishBox(position: number): string {
+export function generateFishBox(position: number): string {
     // 3x3 grid positions:
     // 1 2 3
     // 4 5 6
@@ -10,27 +10,27 @@ function generateFishBox(position: number): string {
 
     const horizontal = "+" + "-----------+".repeat(3);
 
-    function createEmptyRow() {
-        return "|           |           |           |";
+    function center(value: string) {
+        const paddingLeft = Math.floor((boxWidth - value.length) / 2);
+        const paddingRight = boxWidth - value.length - paddingLeft;
+
+        return " ".repeat(paddingLeft) + value + " ".repeat(paddingRight);
     }
 
-    function createFishRow(col: number) {
+    function createEmptyRow() {
+        return `|${center("")}|${center("")}|${center("")}|`;
+    }
+
+    function createCenterRow(row: number) {
         const cells = ["           ", "           ", "           "];
 
-        // center fish in selected cell
-        const paddingLeft = Math.floor((boxWidth - fish.length) / 2);
-        const paddingRight = boxWidth - fish.length - paddingLeft;
-
-        cells[col] =
-            " ".repeat(paddingLeft) +
-            fish +
-            " ".repeat(paddingRight);
+        for (let col = 0; col < 3; col++) {
+            const cellPosition = row * 3 + col + 1;
+            cells[col] = center(cellPosition === position ? fish : String(cellPosition));
+        }
 
         return `|${cells[0]}|${cells[1]}|${cells[2]}|`;
     }
-
-    const rowIndex = Math.floor((position - 1) / 3);
-    const colIndex = (position - 1) % 3;
 
     const lines: string[] = [];
 
@@ -38,9 +38,8 @@ function generateFishBox(position: number): string {
         lines.push(horizontal);
 
         for (let h = 0; h < cellHeight; h++) {
-            // Put fish in center line of selected row
-            if (row === rowIndex && h === 1) {
-                lines.push(createFishRow(colIndex));
+            if (h === 1) {
+                lines.push(createCenterRow(row));
             } else {
                 lines.push(createEmptyRow());
             }
@@ -51,8 +50,3 @@ function generateFishBox(position: number): string {
 
     return lines.join("\n");
 }
-
-// Example usage
-console.log(generateFishBox(1));
-console.log(generateFishBox(5));
-console.log(generateFishBox(9));

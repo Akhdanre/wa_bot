@@ -8,6 +8,7 @@ A minimal WhatsApp bot using `whatsapp-web.js` with TypeScript.
 - Persists session with LocalAuth
 - Group message tracking (yapping, toxic, sticker stats)
 - Level system
+- Fish It minigame with coins, inventory, selling, and rod upgrades
 
 ## Prerequisites
 
@@ -64,6 +65,17 @@ Then scan the new QR code from the logs.
 - `akr-top-toxic` → top toxic users leaderboard
 - `akr-top-sticker` → top sticker senders leaderboard
 - `akr-level` → check your level
+- `akr-fish` → show a 9-box fishing spot
+- `akr-catch <1-9>` → catch the fish from the selected box
+- `akr-fish inv` → show coins, rod, and fish inventory
+- `akr-fish sell all` → sell all fish for coins
+- `akr-fish sell <fish-key>` → sell one fish type
+- `akr-fish tank` → show saved fish that are protected from selling
+- `akr-fish save <fish-key>` → move a fish from bag to tank
+- `akr-fish release <fish-key>` → move a fish from tank back to bag
+- `akr-fish shop` → show rod upgrade cost
+- `akr-fish upgrade` → spend coins to improve catch chance and rare fish odds
+- `akr-fish repair` → repair a damaged or broken rod
 - `akr-help` → show all available commands
 
 ## Session Notes
