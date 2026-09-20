@@ -22,7 +22,11 @@ const statRepo = new StatRepository();
 
 export class MessageService {
     async handle(message: Message) {
-        await this.track(message);
+        try {
+            await this.track(message);
+        } catch (error) {
+            logger.warn("MessageService", "Failed to track message stats", error);
+        }
 
         const body = message.body.trim();
         const command = body.split(" ")[0].toLowerCase();
@@ -72,6 +76,7 @@ export class MessageService {
     }
 
     private async track(message: Message) {
+        if (!message.from.endsWith("@g.us")) return;
         const chat = await message.getChat();
         if (!chat.isGroup) return;
 
