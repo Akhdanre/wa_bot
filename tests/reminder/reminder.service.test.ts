@@ -34,15 +34,35 @@ class MockReminderRepository extends ReminderRepository {
 
 test("getReminderMessage returns meal-specific reminder message", () => {
     const service = new ReminderService(new MockReminderRepository());
-    const bfastMsg = service.getReminderMessage("breakfast", "Alice");
-    assert.match(bfastMsg, /sarapan|pagi sayang/i);
-    assert.match(bfastMsg, /Alice/);
 
-    const lunchMsg = service.getReminderMessage("lunch");
-    assert.match(lunchMsg, /makan siang/i);
+    // With-name (Option B)
+    const bfastWithName = service.getReminderMessage("breakfast", "Alice");
+    assert.match(bfastWithName, /^\*Alice sayang, pagi!\*/);
+    assert.doesNotMatch(bfastWithName, /☀️/);
+    assert.match(bfastWithName, /sarapan/i);
 
-    const dinnerMsg = service.getReminderMessage("dinner");
-    assert.match(dinnerMsg, /makan malam/i);
+    const lunchWithName = service.getReminderMessage("lunch", "Alice");
+    assert.match(lunchWithName, /^\*Alice sayang, udah jam makan siang nih!\*/);
+    assert.doesNotMatch(lunchWithName, /🍱/);
+    assert.match(lunchWithName, /istirahat dulu/i);
+
+    const dinnerWithName = service.getReminderMessage("dinner", "Alice");
+    assert.match(dinnerWithName, /^\*Alice sayang, malam!\*/);
+    assert.doesNotMatch(dinnerWithName, /🍲/);
+    assert.match(dinnerWithName, /makan malam/i);
+
+    // Without-name fallback (absent or empty)
+    const bfastNoName = service.getReminderMessage("breakfast");
+    assert.match(bfastNoName, /^\*Pagi sayang!\*/);
+    assert.doesNotMatch(bfastNoName, /☀️/);
+
+    const lunchEmptyName = service.getReminderMessage("lunch", "");
+    assert.match(lunchEmptyName, /^\*Sayang, udah jam makan siang nih!\*/);
+    assert.doesNotMatch(lunchEmptyName, /🍱/);
+
+    const dinnerNullName = service.getReminderMessage("dinner", null);
+    assert.match(dinnerNullName, /^\*Malam sayang!\*/);
+    assert.doesNotMatch(dinnerNullName, /🍲/);
 });
 
 test("setTime rejects invalid meal name", async () => {

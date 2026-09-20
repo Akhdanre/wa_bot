@@ -53,23 +53,33 @@ export class ReminderService {
     }
 
     getReminderMessage(meal: MealType, userName?: string | null): string {
-        const nameSuffix = userName ? ` *${userName}*` : "";
+        const trimmedName = userName?.trim();
+        const hasName = Boolean(trimmedName);
+
         switch (meal) {
-            case "breakfast":
+            case "breakfast": {
+                const title = hasName ? `*${trimmedName} sayang, pagi!*` : `*Pagi sayang!*`;
                 return (
-                    `☀️ *Pagi sayang!*${nameSuffix}\n\n` +
+                    `${title}\n\n` +
                     `Jangan lupa sarapan dulu yaa, biar ada tenaga dan semangat buat hari ini. Jangan sampai telat makan yaa! ❤️`
                 );
-            case "lunch":
+            }
+            case "lunch": {
+                const title = hasName
+                    ? `*${trimmedName} sayang, udah jam makan siang nih!*`
+                    : `*Sayang, udah jam makan siang nih!*`;
                 return (
-                    `🍱 *Sayang, udah jam makan siang nih!*${nameSuffix}\n\n` +
+                    `${title}\n\n` +
                     `Yuk istirahat dulu gih, tinggalin kerjaannya sebentar. Makan yang kenyang yaa, jangan nunda-nunda nanti maag-nya kambuh 🥺💕`
                 );
-            case "dinner":
+            }
+            case "dinner": {
+                const title = hasName ? `*${trimmedName} sayang, malam!*` : `*Malam sayang!*`;
                 return (
-                    `🍲 *Malam sayang!*${nameSuffix}\n\n` +
+                    `${title}\n\n` +
                     `Udah selesai kan kegiatannya hari ini? Jangan lupa makan malam yaa, terus mandi dan istirahat yang cukup. Bangga banget sama kamu hari ini! 💕✨`
                 );
+            }
         }
     }
 
