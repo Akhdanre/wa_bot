@@ -2,8 +2,9 @@ import cron from "node-cron";
 import { whatsappClient } from "../../whatsapp/client";
 import { logger } from "../../infrastructure/logger";
 import { ReminderRepository } from "./reminder.repository";
+import { SholatRepository } from "./sholat.repository";
 import { ReminderService } from "./reminder.service";
-import { MealType, ReminderProfileWithUser } from "./reminder.types";
+import { MealType, SholatPrayer, ReminderProfileWithUser } from "./reminder.types";
 
 export function getCurrentTimeWIB(now: Date = new Date()): { timeStr: string; dateStr: string } {
     // Format to Asia/Jakarta (WIB)
@@ -44,7 +45,8 @@ export class ReminderScheduler {
         private readonly service: ReminderService = new ReminderService(),
         private readonly sendMessage: SendMessageFunction = async (target, content) => {
             return whatsappClient.sendMessage(target, content);
-        }
+        },
+        private readonly sholatRepo: SholatRepository = new SholatRepository()
     ) {}
 
     async tick(nowDate: Date = new Date()): Promise<number> {
@@ -53,31 +55,58 @@ export class ReminderScheduler {
         let dispatchedCount = 0;
 
         for (const profile of profiles) {
+            // 1. Check Meal Reminders
             const mealToSend = this.getMatchingMeal(profile, timeStr, dateStr);
-            if (!mealToSend) continue;
+            if (mealToSend) {
+                const dispatchKey = `${profile.userId}:meal:${mealToSend}:${dateStr}`;
+                if (!this.inMemorySent.has(dispatchKey)) {
+                    this.inMemorySent.add(dispatchKey);
+                    try {
+                        const messageText = this.service.getReminderMessage(mealToSend, profile.user.name);
+                        await this.sendMessage(profile.user.waId, messageText);
+                        await this.repo.markSent(profile.userId, mealToSend, dateStr);
+                        dispatchedCount++;
+                        logger.info(
+                            "ReminderScheduler",
+                            `Sent ${mealToSend} reminder to ${profile.user.name || profile.user.waId}`
+                        );
+                    } catch (err) {
+                        this.inMemorySent.delete(dispatchKey);
+                        logger.error(
+                            "ReminderScheduler",
+                            `Failed to send meal reminder to ${profile.user.waId}`,
+                            err
+                        );
+                    }
+                }
+            }
 
-            const dispatchKey = `${profile.userId}:${mealToSend}:${dateStr}`;
-            if (this.inMemorySent.has(dispatchKey)) continue;
-
-            // Mark immediately in memory
-            this.inMemorySent.add(dispatchKey);
-
-            try {
-                const messageText = this.service.getReminderMessage(mealToSend, profile.user.name);
-                await this.sendMessage(profile.user.waId, messageText);
-                await this.repo.markSent(profile.userId, mealToSend, dateStr);
-                dispatchedCount++;
-                logger.info(
-                    "ReminderScheduler",
-                    `Sent ${mealToSend} reminder to ${profile.user.name || profile.user.waId}`
-                );
-            } catch (err) {
-                this.inMemorySent.delete(dispatchKey);
-                logger.error(
-                    "ReminderScheduler",
-                    `Failed to send reminder to ${profile.user.waId}`,
-                    err
-                );
+            // 2. Check Sholat Reminders
+            if (profile.sholatEnabled && profile.provinsi && profile.kabkota) {
+                const sholatToSend = await this.getMatchingSholat(profile, timeStr, dateStr);
+                if (sholatToSend) {
+                    const dispatchKey = `${profile.userId}:sholat:${sholatToSend}:${dateStr}`;
+                    if (!this.inMemorySent.has(dispatchKey)) {
+                        this.inMemorySent.add(dispatchKey);
+                        try {
+                            const messageText = this.service.getSholatReminderMessage(sholatToSend, profile.user.name);
+                            await this.sendMessage(profile.user.waId, messageText);
+                            await this.repo.markSholatSent(profile.userId, sholatToSend, dateStr);
+                            dispatchedCount++;
+                            logger.info(
+                                "ReminderScheduler",
+                                `Sent ${sholatToSend} prayer reminder to ${profile.user.name || profile.user.waId}`
+                            );
+                        } catch (err) {
+                            this.inMemorySent.delete(dispatchKey);
+                            logger.error(
+                                "ReminderScheduler",
+                                `Failed to send sholat reminder to ${profile.user.waId}`,
+                                err
+                            );
+                        }
+                    }
+                }
             }
         }
 
@@ -108,6 +137,47 @@ export class ReminderScheduler {
 
         return null;
     }
+
+    private async getMatchingSholat(
+        profile: ReminderProfileWithUser,
+        currentTimeStr: string,
+        currentDateStr: string
+    ): Promise<SholatPrayer | null> {
+        try {
+            const schedule = await this.sholatRepo.getScheduleForDate(
+                profile.provinsi!,
+                profile.kabkota!,
+                currentDateStr
+            );
+            if (!schedule) return null;
+
+            const prayers: { prayer: SholatPrayer; scheduledTime: string }[] = [
+                { prayer: "subuh", scheduledTime: schedule.subuh },
+                { prayer: "dzuhur", scheduledTime: schedule.dzuhur },
+                { prayer: "ashar", scheduledTime: schedule.ashar },
+                { prayer: "maghrib", scheduledTime: schedule.maghrib },
+                { prayer: "isya", scheduledTime: schedule.isya },
+            ];
+
+            for (const { prayer, scheduledTime } of prayers) {
+                if (scheduledTime === currentTimeStr) {
+                    const alreadySent =
+                        profile.lastSentSholat === prayer && profile.lastSholatDate === currentDateStr;
+                    if (!alreadySent) {
+                        return prayer;
+                    }
+                }
+            }
+        } catch (err) {
+            logger.warn(
+                "ReminderScheduler",
+                `Failed to check prayer times for ${profile.provinsi}/${profile.kabkota}`,
+                err
+            );
+        }
+
+        return null;
+    }
 }
 
 export async function checkAndDispatchReminders(options?: {
@@ -134,6 +204,6 @@ export function startReminderScheduler(): cron.ScheduledTask {
         },
         { timezone: "Asia/Jakarta" }
     );
-    logger.info("ReminderScheduler", "Eat reminder scheduler started (running every minute)");
+    logger.info("ReminderScheduler", "Reminder scheduler started (meals & sholat, running every minute)");
     return activeReminderTask;
 }

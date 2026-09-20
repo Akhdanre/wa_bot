@@ -23,6 +23,11 @@ test("ReminderScheduler dispatches reminder when current time matches profile", 
         dinnerTime: "19:00",
         lastSentMeal: null,
         lastSentDate: null,
+        sholatEnabled: false,
+        provinsi: null,
+        kabkota: null,
+        lastSentSholat: null,
+        lastSholatDate: null,
         createdAt: new Date(),
         updatedAt: new Date(),
         user: { id: 1, waId: "628123456789@c.us", name: "Bob" },
@@ -63,6 +68,11 @@ test("ReminderScheduler skips if already sent for same date and meal", async () 
         dinnerTime: "19:00",
         lastSentMeal: "breakfast",
         lastSentDate: "2026-09-20",
+        sholatEnabled: false,
+        provinsi: null,
+        kabkota: null,
+        lastSentSholat: null,
+        lastSholatDate: null,
         createdAt: new Date(),
         updatedAt: new Date(),
         user: { id: 1, waId: "628123456789@c.us", name: "Bob" },
@@ -96,6 +106,11 @@ test("ReminderScheduler in-memory dedup prevents duplicate sends even if reposit
         dinnerTime: "19:00",
         lastSentMeal: null,
         lastSentDate: null,
+        sholatEnabled: false,
+        provinsi: null,
+        kabkota: null,
+        lastSentSholat: null,
+        lastSholatDate: null,
         createdAt: new Date(),
         updatedAt: new Date(),
         user: { id: 1, waId: "628123456789@c.us", name: "Bob" },
@@ -133,6 +148,11 @@ test("ReminderScheduler removes key from inMemorySent if sendMessage fails", asy
         dinnerTime: "19:00",
         lastSentMeal: null,
         lastSentDate: null,
+        sholatEnabled: false,
+        provinsi: null,
+        kabkota: null,
+        lastSentSholat: null,
+        lastSholatDate: null,
         createdAt: new Date(),
         updatedAt: new Date(),
         user: { id: 1, waId: "628123456789@c.us", name: "Bob" },
@@ -170,5 +190,237 @@ test("startReminderScheduler returns existing singleton task", () => {
     const task2 = startReminderScheduler();
     assert.strictEqual(task1, task2);
     task1.stop();
+});
+
+test("ReminderScheduler dispatches sholat reminder when current time matches prayer time", async () => {
+    const testProfile: ReminderProfileWithUser = {
+        id: 1,
+        userId: 1,
+        enabled: true,
+        breakfastTime: "08:00",
+        lunchTime: "12:30",
+        dinnerTime: "19:00",
+        lastSentMeal: null,
+        lastSentDate: null,
+        sholatEnabled: true,
+        provinsi: "DKI Jakarta",
+        kabkota: "Kota Jakarta Pusat",
+        lastSentSholat: null,
+        lastSholatDate: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        user: { id: 1, waId: "628123456789@c.us", name: "Alice" },
+    };
+
+    let markedSholat: string | null = null;
+    let markedDate: string | null = null;
+
+    const mockRepo = {
+        getAllActiveProfiles: async () => [testProfile],
+        markSent: async () => {},
+        markSholatSent: async (_userId: number, prayer: string, date: string) => {
+            markedSholat = prayer;
+            markedDate = date;
+        },
+    } as any;
+
+    const mockSholatRepo = {
+        getScheduleForDate: async () => ({
+            subuh: "04:35",
+            dzuhur: "11:55",
+            ashar: "15:08",
+            maghrib: "17:58",
+            isya: "19:07",
+        }),
+    } as any;
+
+    const sentMessages: { target: string; content: string }[] = [];
+    const service = new ReminderService();
+    const scheduler = new ReminderScheduler(
+        mockRepo,
+        service,
+        async (target, content) => {
+            sentMessages.push({ target, content });
+        },
+        mockSholatRepo
+    );
+
+    // 04:35 WIB is 21:35 UTC previous day
+    const fixedUtc = new Date("2026-09-20T21:35:00Z");
+    const count = await scheduler.tick(fixedUtc);
+
+    assert.equal(count, 1);
+    assert.equal(sentMessages.length, 1);
+    assert.equal(sentMessages[0].target, "628123456789@c.us");
+    assert.match(sentMessages[0].content, /adzan Subuh nih/);
+    assert.equal(markedSholat, "subuh");
+    assert.equal(markedDate, "2026-09-21");
+});
+
+test("ReminderScheduler skips sholat reminder if already sent today", async () => {
+    const testProfile: ReminderProfileWithUser = {
+        id: 1,
+        userId: 1,
+        enabled: true,
+        breakfastTime: "08:00",
+        lunchTime: "12:30",
+        dinnerTime: "19:00",
+        lastSentMeal: null,
+        lastSentDate: null,
+        sholatEnabled: true,
+        provinsi: "DKI Jakarta",
+        kabkota: "Kota Jakarta Pusat",
+        lastSentSholat: "subuh",
+        lastSholatDate: "2026-09-21",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        user: { id: 1, waId: "628123456789@c.us", name: "Alice" },
+    };
+
+    const mockRepo = {
+        getAllActiveProfiles: async () => [testProfile],
+        markSent: async () => {},
+        markSholatSent: async () => {},
+    } as any;
+
+    const mockSholatRepo = {
+        getScheduleForDate: async () => ({
+            subuh: "04:35",
+            dzuhur: "11:55",
+            ashar: "15:08",
+            maghrib: "17:58",
+            isya: "19:07",
+        }),
+    } as any;
+
+    const sentMessages: any[] = [];
+    const service = new ReminderService();
+    const scheduler = new ReminderScheduler(
+        mockRepo,
+        service,
+        async (target, content) => {
+            sentMessages.push({ target, content });
+        },
+        mockSholatRepo
+    );
+
+    const fixedUtc = new Date("2026-09-20T21:35:00Z");
+    const count = await scheduler.tick(fixedUtc);
+
+    assert.equal(count, 0);
+    assert.equal(sentMessages.length, 0);
+});
+
+test("ReminderScheduler handles error gracefully when sholatRepo throws", async () => {
+    const testProfile: ReminderProfileWithUser = {
+        id: 1,
+        userId: 1,
+        enabled: true,
+        breakfastTime: "08:00",
+        lunchTime: "12:30",
+        dinnerTime: "19:00",
+        lastSentMeal: null,
+        lastSentDate: null,
+        sholatEnabled: true,
+        provinsi: "DKI Jakarta",
+        kabkota: "Kota Jakarta Pusat",
+        lastSentSholat: null,
+        lastSholatDate: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        user: { id: 1, waId: "628123456789@c.us", name: "Alice" },
+    };
+
+    const mockRepo = {
+        getAllActiveProfiles: async () => [testProfile],
+        markSent: async () => {},
+        markSholatSent: async () => {},
+    } as any;
+
+    const mockSholatRepo = {
+        getScheduleForDate: async () => {
+            throw new Error("DB error");
+        },
+    } as any;
+
+    const sentMessages: any[] = [];
+    const service = new ReminderService();
+    const scheduler = new ReminderScheduler(
+        mockRepo,
+        service,
+        async (target, content) => {
+            sentMessages.push({ target, content });
+        },
+        mockSholatRepo
+    );
+
+    const fixedUtc = new Date("2026-09-20T21:35:00Z");
+    const count = await scheduler.tick(fixedUtc);
+
+    assert.equal(count, 0);
+    assert.equal(sentMessages.length, 0);
+});
+
+test("ReminderScheduler removes sholat key from inMemorySent if sendMessage fails", async () => {
+    const testProfile: ReminderProfileWithUser = {
+        id: 1,
+        userId: 1,
+        enabled: true,
+        breakfastTime: "08:00",
+        lunchTime: "12:30",
+        dinnerTime: "19:00",
+        lastSentMeal: null,
+        lastSentDate: null,
+        sholatEnabled: true,
+        provinsi: "DKI Jakarta",
+        kabkota: "Kota Jakarta Pusat",
+        lastSentSholat: null,
+        lastSholatDate: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        user: { id: 1, waId: "628123456789@c.us", name: "Alice" },
+    };
+
+    const mockRepo = {
+        getAllActiveProfiles: async () => [testProfile],
+        markSent: async () => {},
+        markSholatSent: async () => {},
+    } as any;
+
+    const mockSholatRepo = {
+        getScheduleForDate: async () => ({
+            subuh: "04:35",
+            dzuhur: "11:55",
+            ashar: "15:08",
+            maghrib: "17:58",
+            isya: "19:07",
+        }),
+    } as any;
+
+    let shouldFail = true;
+    const sentMessages: any[] = [];
+    const service = new ReminderService();
+    const scheduler = new ReminderScheduler(
+        mockRepo,
+        service,
+        async (target, content) => {
+            if (shouldFail) {
+                throw new Error("Send failure");
+            }
+            sentMessages.push({ target, content });
+        },
+        mockSholatRepo
+    );
+
+    const fixedUtc = new Date("2026-09-20T21:35:00Z");
+    const failCount = await scheduler.tick(fixedUtc);
+    assert.equal(failCount, 0);
+    assert.equal(sentMessages.length, 0);
+
+    // Next tick retry succeeds
+    shouldFail = false;
+    const retryCount = await scheduler.tick(fixedUtc);
+    assert.equal(retryCount, 1);
+    assert.equal(sentMessages.length, 1);
 });
 
