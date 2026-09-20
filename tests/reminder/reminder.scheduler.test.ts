@@ -49,7 +49,7 @@ test("ReminderScheduler dispatches reminder when current time matches profile", 
     assert.equal(sentCount, 1);
     assert.equal(sentMessages.length, 1);
     assert.equal(sentMessages[0].target, "628123456789@c.us");
-    assert.match(sentMessages[0].content, /breakfast/i);
+    assert.match(sentMessages[0].content, /sarapan|pagi/i);
     assert.equal(markedMeal, "breakfast");
 });
 

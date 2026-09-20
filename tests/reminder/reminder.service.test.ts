@@ -35,14 +35,14 @@ class MockReminderRepository extends ReminderRepository {
 test("getReminderMessage returns meal-specific reminder message", () => {
     const service = new ReminderService(new MockReminderRepository());
     const bfastMsg = service.getReminderMessage("breakfast", "Alice");
-    assert.match(bfastMsg, /breakfast/i);
+    assert.match(bfastMsg, /sarapan|pagi sayang/i);
     assert.match(bfastMsg, /Alice/);
 
     const lunchMsg = service.getReminderMessage("lunch");
-    assert.match(lunchMsg, /lunch/i);
+    assert.match(lunchMsg, /makan siang/i);
 
     const dinnerMsg = service.getReminderMessage("dinner");
-    assert.match(dinnerMsg, /dinner/i);
+    assert.match(dinnerMsg, /makan malam/i);
 });
 
 test("setTime rejects invalid meal name", async () => {

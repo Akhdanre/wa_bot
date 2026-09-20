@@ -53,22 +53,22 @@ export class ReminderService {
     }
 
     getReminderMessage(meal: MealType, userName?: string | null): string {
-        const greeting = userName ? `Hey *${userName}*!` : `Hey!`;
+        const nameSuffix = userName ? ` *${userName}*` : "";
         switch (meal) {
             case "breakfast":
                 return (
-                    `🍳 *Breakfast Reminder!*\n\n` +
-                    `${greeting} It's breakfast time. Fuel up your day with a nutritious morning meal!`
+                    `☀️ *Pagi sayang!*${nameSuffix}\n\n` +
+                    `Jangan lupa sarapan dulu yaa, biar ada tenaga dan semangat buat hari ini. Jangan sampai telat makan yaa! ❤️`
                 );
             case "lunch":
                 return (
-                    `🍱 *Lunch Reminder!*\n\n` +
-                    `${greeting} Time for lunch! Step away from your desk, take a break, and enjoy your meal.`
+                    `🍱 *Sayang, udah jam makan siang nih!*${nameSuffix}\n\n` +
+                    `Yuk istirahat dulu gih, tinggalin kerjaannya sebentar. Makan yang kenyang yaa, jangan nunda-nunda nanti maag-nya kambuh 🥺💕`
                 );
             case "dinner":
                 return (
-                    `🍲 *Dinner Reminder!*\n\n` +
-                    `${greeting} Dinner time! Treat yourself to a good dinner and rest well tonight.`
+                    `🍲 *Malam sayang!*${nameSuffix}\n\n` +
+                    `Udah selesai kan kegiatannya hari ini? Jangan lupa makan malam yaa, terus mandi dan istirahat yang cukup. Bangga banget sama kamu hari ini! 💕✨`
                 );
         }
     }
