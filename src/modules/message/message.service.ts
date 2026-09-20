@@ -14,7 +14,7 @@ import { catchCommand, fishCommand } from "./commands/fish.command";
 import { UserRepository } from "./user.repository";
 import { GroupRepository } from "./group.repository";
 import { StatRepository } from "./stat.repository";
-import { reminderCommand } from "../reminder";
+import { reminderCommand, hasActiveLocationSession, handleLocationSessionInput } from "../reminder";
 
 const userRepo = new UserRepository();
 const groupRepo = new GroupRepository();
@@ -29,6 +29,16 @@ export class MessageService {
         }
 
         const body = message.body.trim();
+        const contact = await message.getContact();
+        const waId = contact.id._serialized;
+
+        // Check if user is in an active interactive location session
+        if (hasActiveLocationSession(waId)) {
+            const reply = await handleLocationSessionInput(waId, body, undefined, undefined, undefined, contact.pushname);
+            await message.reply(reply);
+            return;
+        }
+
         const command = body.split(" ")[0].toLowerCase();
 
         switch (command) {

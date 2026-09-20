@@ -17,7 +17,8 @@ export async function helpCommand(message: Message) {
 │  • akr-scheduler    — _Toggle weekly summary_
 │
 │  *Reminders*
-│  • !reminder status   — _View meal schedule_
+│  • !reminder status   — _View meal & sholat schedule_
+│  • !reminder loc      — _Configure prayer time location_
 │  • !reminder help     — _Reminder options & config_
 │
 │  *Minigames*
