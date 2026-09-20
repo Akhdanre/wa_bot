@@ -42,7 +42,7 @@ test("Full reminder configuration workflow via service", async () => {
     assert.match(initialStatus, /08:00/);
     assert.match(initialStatus, /12:30/);
     assert.match(initialStatus, /19:00/);
-    assert.match(initialStatus, /ACTIVE/);
+    assert.match(initialStatus, /ON/);
 
     // 2. Change breakfast to 07:45
     const setRes = await service.setTime(userWaId, "breakfast", "07:45");

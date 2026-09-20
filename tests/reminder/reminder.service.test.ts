@@ -12,6 +12,11 @@ class MockReminderRepository extends ReminderRepository {
         breakfastTime: "08:00",
         lunchTime: "12:30",
         dinnerTime: "19:00",
+        sholatEnabled: true,
+        provinsi: null,
+        kabkota: null,
+        lastSentSholat: null,
+        lastSholatDate: null,
         lastSentMeal: null,
         lastSentDate: null,
         createdAt: new Date(),
@@ -93,4 +98,99 @@ test("setEnabled toggles active status", async () => {
     assert.equal(repo.profile.enabled, false);
     await service.setEnabled("628123456789@c.us", true);
     assert.equal(repo.profile.enabled, true);
+});
+
+test("getSholatReminderMessage returns girlfriend persona messages with name and fallback", () => {
+    const service = new ReminderService();
+
+    // Subuh
+    const subuhWithName = service.getSholatReminderMessage("subuh", "Alice");
+    assert.match(subuhWithName, /^\*Alice sayang, udah adzan Subuh nih\.\.\. 🌅✨\*/);
+    assert.match(subuhWithName, /wudhu terus sholat Subuh/);
+
+    const subuhNoName = service.getSholatReminderMessage("subuh");
+    assert.match(subuhNoName, /^\*Sayang, udah adzan Subuh nih\.\.\. 🌅✨\*/);
+
+    // Dzuhur
+    const dzuhurMsg = service.getSholatReminderMessage("dzuhur", "Alice");
+    assert.match(dzuhurMsg, /^\*Sayang, udah masuk waktu Dzuhur lho! ☀️🌤️\*/);
+    assert.match(dzuhurMsg, /langsung makan siang yaa/);
+
+    // Ashar
+    const asharMsg = service.getSholatReminderMessage("ashar", "Alice");
+    assert.match(asharMsg, /^\*Alice sayang, waktu Ashar udah tiba nih 🌇💫\*/);
+
+    // Maghrib
+    const maghribMsg = service.getSholatReminderMessage("maghrib", "Alice");
+    assert.match(maghribMsg, /^\*Sayangku, udah adzan Maghrib\.\.\. 🌆🌙\*/);
+
+    // Isya
+    const isyaMsg = service.getSholatReminderMessage("isya", "Alice");
+    assert.match(isyaMsg, /^\*Alice sayang, udah masuk waktu Isya nih 🌃✨\*/);
+    assert.match(isyaMsg, /Good night nanti yaa cintaku!/);
+});
+
+test("toggleSholat updates sholatEnabled flag and returns message", async () => {
+    let updatedEnabled: boolean | undefined;
+    const mockRepo = {
+        getOrCreate: async () => ({
+            id: 1,
+            userId: 1,
+            enabled: true,
+            sholatEnabled: true,
+            provinsi: "DKI Jakarta",
+            kabkota: "Kota Jakarta Pusat",
+        }),
+        updateSholatSettings: async (_userId: number, data: { sholatEnabled?: boolean }) => {
+            updatedEnabled = data.sholatEnabled;
+        },
+    } as any;
+
+    const service = new ReminderService(mockRepo);
+    const resultOff = await service.toggleSholat("628123456789@c.us", false);
+    assert.equal(updatedEnabled, false);
+    assert.match(resultOff, /⏸️ Pengingat sholat dinonaktifkan/);
+
+    const resultOn = await service.toggleSholat("628123456789@c.us", true);
+    assert.equal(updatedEnabled, true);
+    assert.match(resultOn, /✅ Pengingat sholat diaktifkan/);
+});
+
+test("setDirectLocation validates and updates location shortcut", async () => {
+    let savedLocation: { provinsi?: string; kabkota?: string } | undefined;
+    let prefetchCalled = false;
+
+    const mockRepo = {
+        getOrCreate: async () => ({ id: 1, userId: 1 }),
+        updateSholatSettings: async (_userId: number, data: any) => {
+            savedLocation = data;
+        },
+    } as any;
+
+    const mockSholatRepo = {
+        getScheduleForDate: async () => null,
+        prefetchMonthlySchedule: async () => {
+            prefetchCalled = true;
+        },
+    } as any;
+
+    const mockEquranClient = {
+        getProvinces: async () => ["DKI Jakarta", "Jawa Barat"],
+        getKabKota: async (prov: string) =>
+            prov === "DKI Jakarta" ? ["Kota Jakarta Pusat", "Kota Jakarta Selatan"] : [],
+    } as any;
+
+    const service = new ReminderService(mockRepo, mockSholatRepo, mockEquranClient);
+
+    // Invalid format (no pipe)
+    const errRes = await service.setDirectLocation("628123456789@c.us", "DKI Jakarta Kota Jakarta Pusat");
+    assert.equal(errRes.success, false);
+    assert.match(errRes.message, /Gunakan format: \*!reminder loc Provinsi \| Kab\/Kota\*/);
+
+    // Valid format
+    const okRes = await service.setDirectLocation("628123456789@c.us", "DKI Jakarta | Kota Jakarta Selatan");
+    assert.equal(okRes.success, true);
+    assert.equal(savedLocation?.provinsi, "DKI Jakarta");
+    assert.equal(savedLocation?.kabkota, "Kota Jakarta Selatan");
+    assert.equal(prefetchCalled, true);
 });
