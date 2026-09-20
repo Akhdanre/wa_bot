@@ -20,4 +20,4 @@ RUN npx prisma generate
 COPY tsconfig.json ./
 COPY src ./src
 
-CMD ["sh", "-c", "find /app/.wwebjs_auth -name 'SingletonLock' -delete 2>/dev/null; npx prisma migrate deploy && npm start"]
+CMD ["sh", "-c", "find /app/.wwebjs_auth -name 'Singleton*' -delete 2>/dev/null; npx prisma migrate deploy && npm start"]

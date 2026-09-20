@@ -23,7 +23,7 @@ services:
     volumes:
       - wwebjs_auth:/app/.wwebjs_auth
       - ./src:/app/src
-    command: sh -c "find /app/.wwebjs_auth -name 'SingletonLock' -delete 2>/dev/null; npx prisma migrate deploy && npx tsx watch src/index.ts"
+    command: sh -c "find /app/.wwebjs_auth -name 'Singleton*' -delete 2>/dev/null; npx prisma migrate deploy && npx tsx watch src/index.ts"
 
 volumes:
   pgdata:
