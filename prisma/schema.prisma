@@ -13,12 +13,13 @@ datasource db {
 }
 
 model User {
-  id          Int          @id @default(autoincrement())
-  waId        String       @unique
-  name        String?
-  createdAt   DateTime     @default(now())
-  stats       Stat[]
-  fishProfile FishProfile?
+  id              Int              @id @default(autoincrement())
+  waId            String           @unique
+  name            String?
+  createdAt       DateTime         @default(now())
+  stats           Stat[]
+  fishProfile     FishProfile?
+  reminderProfile ReminderProfile?
 }
 
 model Group {
@@ -75,4 +76,19 @@ model FishInventory {
   profile FishProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@unique([profileId, fishKey])
+}
+
+model ReminderProfile {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @unique
+  enabled       Boolean  @default(true)
+  breakfastTime String   @default("08:00")
+  lunchTime     String   @default("12:30")
+  dinnerTime    String   @default("19:00")
+  lastSentMeal  String?
+  lastSentDate  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
