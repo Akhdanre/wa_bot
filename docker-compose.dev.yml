@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: bot_password
       POSTGRES_DB: whatsapp_bot
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
 
