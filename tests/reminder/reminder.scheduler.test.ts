@@ -424,3 +424,50 @@ test("ReminderScheduler removes sholat key from inMemorySent if sendMessage fail
     assert.equal(sentMessages.length, 1);
 });
 
+test("ReminderScheduler prunes inMemorySent keys from previous dates on tick", async () => {
+    const testProfile: ReminderProfileWithUser = {
+        id: 1,
+        userId: 1,
+        enabled: true,
+        breakfastTime: "08:00",
+        lunchTime: "12:30",
+        dinnerTime: "19:00",
+        lastSentMeal: null,
+        lastSentDate: null,
+        sholatEnabled: false,
+        provinsi: null,
+        kabkota: null,
+        lastSentSholat: null,
+        lastSholatDate: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        user: { id: 1, waId: "628123456789@c.us", name: "Bob" },
+    };
+
+    const mockRepo = {
+        getAllActiveProfiles: async () => [testProfile],
+        markSent: async () => {},
+    } as unknown as ReminderRepository;
+
+    const service = new ReminderService(mockRepo);
+    const sentMessages: any[] = [];
+    const scheduler = new ReminderScheduler(mockRepo, service, async (target, content) => {
+        sentMessages.push({ target, content });
+    });
+
+    // Tick on day 1 (2026-09-20)
+    const day1Utc = new Date("2026-09-20T01:00:00Z"); // 08:00 WIB
+    await scheduler.tick(day1Utc);
+
+    const inMemorySent = (scheduler as any).inMemorySent as Set<string>;
+    assert.equal(inMemorySent.has("1:meal:breakfast:2026-09-20"), true);
+
+    // Tick on day 2 (2026-09-21) at 08:00 WIB
+    const day2Utc = new Date("2026-09-21T01:00:00Z"); // 08:00 WIB
+    await scheduler.tick(day2Utc);
+
+    // Day 1 key must be pruned
+    assert.equal(inMemorySent.has("1:meal:breakfast:2026-09-20"), false);
+    assert.equal(inMemorySent.has("1:meal:breakfast:2026-09-21"), true);
+});
+

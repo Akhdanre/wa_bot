@@ -148,3 +148,27 @@ test("Location session repo error in step 2 returns friendly error message", asy
     assert.match(msg, /Maaf sayang, ada kendala saat menyimpan lokasi kamu/);
 });
 
+test("startLocationSession resets any existing session for the waId", async () => {
+    const waId = "628999000444@c.us";
+    clearLocationSession(waId);
+
+    const mockClient = {
+        getProvinces: async () => ["DKI Jakarta", "Jawa Barat"],
+        getKabKota: async () => ["Kota Bandung"],
+    } as unknown as EquranClient;
+
+    // Start session and advance to step 2
+    await startLocationSession(waId, mockClient);
+    await handleLocationSessionInput(waId, "2", undefined, undefined, mockClient);
+    assert.equal(hasActiveLocationSession(waId), true);
+
+    // Call startLocationSession again (simulating user calling !reminder loc again)
+    const restartPrompt = await startLocationSession(waId, mockClient);
+    assert.match(restartPrompt, /Pilih Provinsi tempat kamu tinggal yaa/);
+
+    // Next input "1" should pick DKI Jakarta (step 1), NOT Kota Bandung (step 2)
+    const nextStepPrompt = await handleLocationSessionInput(waId, "1", undefined, undefined, mockClient);
+    assert.match(nextStepPrompt, /Pilih Kota\/Kabupaten di \*DKI Jakarta\*/);
+});
+
+

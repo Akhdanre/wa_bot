@@ -1,6 +1,7 @@
 import { EquranClient } from "./api/equran.client";
 import { ReminderRepository } from "./reminder.repository";
 import { SholatRepository } from "./sholat.repository";
+import { getCurrentTimeWIB } from "./reminder.scheduler";
 
 interface LocationSession {
     step: 1 | 2;
@@ -32,6 +33,7 @@ export async function startLocationSession(
     waId: string,
     client: EquranClient = new EquranClient()
 ): Promise<string> {
+    clearLocationSession(waId);
     const provinces = await client.getProvinces();
     const now = Date.now();
 
@@ -122,9 +124,7 @@ export async function handleLocationSessionInput(
             });
 
             // Trigger schedule prefetch
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = now.getMonth() + 1;
+            const { year, month } = getCurrentTimeWIB();
             await sholatRepo.prefetchMonthlySchedule(selectedProvinsi, selectedKabkota, year, month).catch(() => {});
 
             return `Alhamdulillah! Lokasi sholat berhasil diatur ke *${selectedKabkota}, ${selectedProvinsi}* yaa sayang. Mulai sekarang aku bakal ingetin kamu waktu sholat tepat waktu 💕✨`;

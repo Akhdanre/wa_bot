@@ -6,7 +6,12 @@ import { SholatRepository } from "./sholat.repository";
 import { ReminderService } from "./reminder.service";
 import { MealType, SholatPrayer, ReminderProfileWithUser } from "./reminder.types";
 
-export function getCurrentTimeWIB(now: Date = new Date()): { timeStr: string; dateStr: string } {
+export function getCurrentTimeWIB(now: Date = new Date()): {
+    timeStr: string;
+    dateStr: string;
+    year: number;
+    month: number;
+} {
     // Format to Asia/Jakarta (WIB)
     const formatter = new Intl.DateTimeFormat("en-GB", {
         timeZone: "Asia/Jakarta",
@@ -30,6 +35,8 @@ export function getCurrentTimeWIB(now: Date = new Date()): { timeStr: string; da
     return {
         timeStr: `${hour}:${minute}`,
         dateStr: `${year}-${month}-${day}`,
+        year: parseInt(year, 10),
+        month: parseInt(month, 10),
     };
 }
 
@@ -51,6 +58,13 @@ export class ReminderScheduler {
 
     async tick(nowDate: Date = new Date()): Promise<number> {
         const { timeStr, dateStr } = getCurrentTimeWIB(nowDate);
+
+        for (const key of this.inMemorySent) {
+            if (!key.endsWith(`:${dateStr}`)) {
+                this.inMemorySent.delete(key);
+            }
+        }
+
         const profiles = await this.repo.getAllActiveProfiles();
         let dispatchedCount = 0;
 

@@ -31,15 +31,16 @@ export class MessageService {
         const body = message.body.trim();
         const contact = await message.getContact();
         const waId = contact.id._serialized;
+        const isGroup = message.from.endsWith("@g.us");
+        const command = body.split(" ")[0].toLowerCase();
+        const isCommand = command.startsWith("!") || command.startsWith("akr-");
 
         // Check if user is in an active interactive location session
-        if (hasActiveLocationSession(waId)) {
+        if (!isCommand && !isGroup && hasActiveLocationSession(waId)) {
             const reply = await handleLocationSessionInput(waId, body, undefined, undefined, undefined, contact.pushname);
             await message.reply(reply);
             return;
         }
-
-        const command = body.split(" ")[0].toLowerCase();
 
         switch (command) {
             case "akr-reminder":

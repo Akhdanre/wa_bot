@@ -117,9 +117,7 @@ export class ReminderService {
             });
 
             // Prefetch current month's schedule
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = now.getMonth() + 1;
+            const { year, month } = getCurrentTimeWIB();
             await this.sholatRepo.prefetchMonthlySchedule(matchedProv, matchedCity, year, month).catch(() => {});
 
             return {
