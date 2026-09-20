@@ -1,5 +1,5 @@
 import { prisma } from "../../infrastructure/database";
-import { MealType, ReminderProfileWithUser } from "./reminder.types";
+import { MealType, ReminderProfileWithUser, SholatPrayer } from "./reminder.types";
 
 export class ReminderRepository {
     async getByWaId(waId: string): Promise<ReminderProfileWithUser | null> {
@@ -70,6 +70,43 @@ export class ReminderRepository {
     async getAllActiveProfiles(): Promise<ReminderProfileWithUser[]> {
         return prisma.reminderProfile.findMany({
             where: { enabled: true },
+            include: { user: true },
+        }) as Promise<ReminderProfileWithUser[]>;
+    }
+
+    async updateSholatSettings(
+        userId: number,
+        data: {
+            sholatEnabled?: boolean;
+            provinsi?: string;
+            kabkota?: string;
+        }
+    ): Promise<ReminderProfileWithUser> {
+        return prisma.reminderProfile.update({
+            where: { userId },
+            data,
+            include: { user: true },
+        }) as Promise<ReminderProfileWithUser>;
+    }
+
+    async markSholatSent(userId: number, prayer: SholatPrayer, dateStr: string): Promise<void> {
+        await prisma.reminderProfile.update({
+            where: { userId },
+            data: {
+                lastSentSholat: prayer,
+                lastSholatDate: dateStr,
+            },
+        });
+    }
+
+    async getAllActiveSholatProfiles(): Promise<ReminderProfileWithUser[]> {
+        return prisma.reminderProfile.findMany({
+            where: {
+                enabled: true,
+                sholatEnabled: true,
+                provinsi: { not: null },
+                kabkota: { not: null },
+            },
             include: { user: true },
         }) as Promise<ReminderProfileWithUser[]>;
     }
