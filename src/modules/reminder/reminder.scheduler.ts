@@ -34,7 +34,11 @@ export function getCurrentTimeWIB(now: Date = new Date()): { timeStr: string; da
 
 export type SendMessageFunction = (target: string, content: string) => Promise<unknown>;
 
+let activeReminderTask: cron.ScheduledTask | null = null;
+
 export class ReminderScheduler {
+    private readonly inMemorySent = new Set<string>();
+
     constructor(
         private readonly repo: ReminderRepository = new ReminderRepository(),
         private readonly service: ReminderService = new ReminderService(),
@@ -52,6 +56,12 @@ export class ReminderScheduler {
             const mealToSend = this.getMatchingMeal(profile, timeStr, dateStr);
             if (!mealToSend) continue;
 
+            const dispatchKey = `${profile.userId}:${mealToSend}:${dateStr}`;
+            if (this.inMemorySent.has(dispatchKey)) continue;
+
+            // Mark immediately in memory
+            this.inMemorySent.add(dispatchKey);
+
             try {
                 const messageText = this.service.getReminderMessage(mealToSend, profile.user.name);
                 await this.sendMessage(profile.user.waId, messageText);
@@ -62,6 +72,7 @@ export class ReminderScheduler {
                     `Sent ${mealToSend} reminder to ${profile.user.name || profile.user.waId}`
                 );
             } catch (err) {
+                this.inMemorySent.delete(dispatchKey);
                 logger.error(
                     "ReminderScheduler",
                     `Failed to send reminder to ${profile.user.waId}`,
@@ -112,8 +123,11 @@ export async function checkAndDispatchReminders(options?: {
 }
 
 export function startReminderScheduler(): cron.ScheduledTask {
+    if (activeReminderTask) {
+        return activeReminderTask;
+    }
     const scheduler = new ReminderScheduler();
-    const task = cron.schedule(
+    activeReminderTask = cron.schedule(
         "* * * * *",
         async () => {
             await scheduler.tick();
@@ -121,5 +135,5 @@ export function startReminderScheduler(): cron.ScheduledTask {
         { timezone: "Asia/Jakarta" }
     );
     logger.info("ReminderScheduler", "Eat reminder scheduler started (running every minute)");
-    return task;
+    return activeReminderTask;
 }
