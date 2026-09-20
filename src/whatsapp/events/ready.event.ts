@@ -4,6 +4,14 @@ import { startScheduler } from "../../modules/scheduler";
 import { startReminderScheduler } from "../../modules/reminder";
 
 export function registerReadyEvent() {
+    whatsappClient.on("authenticated", () => {
+        logger.info("WhatsApp", "Authenticated successfully!");
+    });
+
+    whatsappClient.on("loading_screen", (percent, message) => {
+        logger.info("WhatsApp", `Loading: ${percent}% - ${message}`);
+    });
+
     whatsappClient.on("ready", () => {
         logger.info("WhatsApp", "Client is ready!");
         startScheduler();
