@@ -14,6 +14,7 @@ import { catchCommand, fishCommand } from "./commands/fish.command";
 import { UserRepository } from "./user.repository";
 import { GroupRepository } from "./group.repository";
 import { StatRepository } from "./stat.repository";
+import { reminderCommand } from "../reminder";
 
 const userRepo = new UserRepository();
 const groupRepo = new GroupRepository();
@@ -27,6 +28,10 @@ export class MessageService {
         const command = body.split(" ")[0].toLowerCase();
 
         switch (command) {
+            case "akr-reminder":
+            case "!reminder":
+                await reminderCommand(message, body);
+                break;
             case "akr-ping":
                 await pingCommand(message);
                 break;

@@ -1,11 +1,13 @@
 import { whatsappClient } from "../client";
 import { logger } from "../../infrastructure/logger";
 import { startScheduler } from "../../modules/scheduler";
+import { startReminderScheduler } from "../../modules/reminder";
 
 export function registerReadyEvent() {
     whatsappClient.on("ready", () => {
         logger.info("WhatsApp", "Client is ready!");
         startScheduler();
+        startReminderScheduler();
     });
 
     whatsappClient.on("auth_failure", (msg) => {
