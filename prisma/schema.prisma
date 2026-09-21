@@ -13,12 +13,13 @@ datasource db {
 }
 
 model User {
-  id          Int          @id @default(autoincrement())
-  waId        String       @unique
-  name        String?
-  createdAt   DateTime     @default(now())
-  stats       Stat[]
-  fishProfile FishProfile?
+  id              Int              @id @default(autoincrement())
+  waId            String           @unique
+  name            String?
+  createdAt       DateTime         @default(now())
+  stats           Stat[]
+  fishProfile     FishProfile?
+  reminderProfile ReminderProfile?
 }
 
 model Group {
@@ -75,4 +76,45 @@ model FishInventory {
   profile FishProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@unique([profileId, fishKey])
+}
+
+model ReminderProfile {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @unique
+  enabled       Boolean  @default(true)
+  breakfastTime String   @default("08:00")
+  lunchTime     String   @default("12:30")
+  dinnerTime    String   @default("19:00")
+  lastSentMeal  String?
+  lastSentDate  String?
+
+  // Sholat fields
+  sholatEnabled   Boolean  @default(true)
+  provinsi        String?  @default("DKI Jakarta")
+  kabkota         String?  @default("Kota Jakarta Pusat")
+  lastSentSholat  String?
+  lastSholatDate  String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SholatSchedule {
+  id        Int      @id @default(autoincrement())
+  provinsi  String
+  kabkota   String
+  year      Int
+  month     Int
+  date      String   // Format: "YYYY-MM-DD"
+  subuh     String   // Format: "HH:mm"
+  dzuhur    String   // Format: "HH:mm"
+  ashar     String   // Format: "HH:mm"
+  maghrib   String   // Format: "HH:mm"
+  isya      String   // Format: "HH:mm"
+  createdAt DateTime @default(now())
+
+  @@unique([provinsi, kabkota, date])
+  @@index([provinsi, kabkota, year, month])
 }

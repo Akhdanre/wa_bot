@@ -10,11 +10,18 @@ whatsappClient.initialize().catch((error) => {
     process.exit(1);
 });
 
-process.on("SIGINT", async () => {
+const shutdown = async () => {
     logger.info("App", "Shutting down...");
-    await whatsappClient.destroy();
+    try {
+        await whatsappClient.destroy();
+    } catch (error) {
+        logger.error("App", "Error during shutdown", error);
+    }
     process.exit(0);
-});
+};
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
 
 process.on("unhandledRejection", (reason) => {
     logger.error("App", "Unhandled rejection", reason);
