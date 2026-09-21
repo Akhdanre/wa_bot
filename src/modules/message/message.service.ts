@@ -1,4 +1,5 @@
 import { Message } from "whatsapp-web.js";
+import { FEATURES } from "../../config/features";
 import { logger } from "../../infrastructure/logger";
 import { countBadWords } from "../../infrastructure/profanity";
 import { pingCommand } from "./commands/ping.command";
@@ -22,10 +23,12 @@ const statRepo = new StatRepository();
 
 export class MessageService {
     async handle(message: Message) {
-        try {
-            await this.track(message);
-        } catch (error) {
-            logger.warn("MessageService", "Failed to track message stats", error);
+        if (FEATURES.tracking) {
+            try {
+                await this.track(message);
+            } catch (error) {
+                logger.warn("MessageService", "Failed to track message stats", error);
+            }
         }
 
         const body = message.body.trim();
@@ -36,7 +39,7 @@ export class MessageService {
         const isCommand = command.startsWith("!") || command.startsWith("akr-");
 
         // Check if user is in an active interactive location session
-        if (!isCommand && !isGroup && hasActiveLocationSession(waId)) {
+        if (FEATURES.reminder && !isCommand && !isGroup && hasActiveLocationSession(waId)) {
             const reply = await handleLocationSessionInput(waId, body, undefined, undefined, undefined, contact.pushname);
             await message.reply(reply);
             return;
@@ -45,40 +48,42 @@ export class MessageService {
         switch (command) {
             case "akr-reminder":
             case "!reminder":
-                await reminderCommand(message, body);
+                if (FEATURES.reminder) {
+                    await reminderCommand(message, body);
+                }
                 break;
             case "akr-ping":
-                await pingCommand(message);
+                if (FEATURES.generalCommands) await pingCommand(message);
                 break;
             case "akr-echo":
-                await echoCommand(message, body.slice(6));
+                if (FEATURES.generalCommands) await echoCommand(message, body.slice(6));
                 break;
             case "akr-top-yapping":
-                await topYappingCommand(message);
+                if (FEATURES.generalCommands) await topYappingCommand(message);
                 break;
             case "akr-top-toxic":
-                await topToxicCommand(message);
+                if (FEATURES.generalCommands) await topToxicCommand(message);
                 break;
             case "akr-top-sticker":
-                await topStickerCommand(message);
+                if (FEATURES.generalCommands) await topStickerCommand(message);
                 break;
             case "akr-level":
-                await levelCommand(message);
+                if (FEATURES.generalCommands) await levelCommand(message);
                 break;
             case "akr-help":
-                await helpCommand(message);
+                if (FEATURES.generalCommands) await helpCommand(message);
                 break;
             case "akr-fish-help":
-                await fishHelpCommand(message);
+                if (FEATURES.generalCommands) await fishHelpCommand(message);
                 break;
             case "akr-scheduler":
-                await toggleSchedulerCommand(message);
+                if (FEATURES.generalCommands) await toggleSchedulerCommand(message);
                 break;
             case "akr-fish":
-                await fishCommand(message, body);
+                if (FEATURES.generalCommands) await fishCommand(message, body);
                 break;
             case "akr-catch":
-                await catchCommand(message, body);
+                if (FEATURES.generalCommands) await catchCommand(message, body);
                 break;
             default:
                 //     logger.info("MessageService", `Unhandled message: ${body}`);
