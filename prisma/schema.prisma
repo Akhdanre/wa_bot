@@ -95,6 +95,12 @@ model ReminderProfile {
   lastSentSholat  String?
   lastSholatDate  String?
 
+  // Sleep fields
+  sleepTime     String?  @default("22:00")
+  sleepEnabled  Boolean  @default(true)
+  lastSentSleep String?
+  lastSleepDate String?
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

@@ -39,6 +39,10 @@ export interface ReminderProfileWithUser {
     kabkota: string | null;
     lastSentSholat: string | null;
     lastSholatDate: string | null;
+    sleepTime: string | null;
+    sleepEnabled: boolean;
+    lastSentSleep: string | null;
+    lastSleepDate: string | null;
     createdAt: Date;
     updatedAt: Date;
     user: {

@@ -3,9 +3,17 @@ import { ReminderService } from "./reminder.service";
 import { isValidMeal, isValidSholatPrayer, MealType, SholatPrayer } from "./reminder.types";
 import { startLocationSession } from "./reminder.session";
 
-const reminderService = new ReminderService();
+let defaultReminderService = new ReminderService();
 
-export async function reminderCommand(message: Message, body: string): Promise<void> {
+export function setReminderServiceForTest(service: ReminderService): void {
+    defaultReminderService = service;
+}
+
+export async function reminderCommand(
+    message: Message,
+    body: string,
+    service: ReminderService = defaultReminderService
+): Promise<void> {
     const contact = await message.getContact();
     const waId = contact.id._serialized;
     const name = contact.pushname;
@@ -15,28 +23,33 @@ export async function reminderCommand(message: Message, body: string): Promise<v
 
     switch (subCommand) {
         case "status": {
-            const statusMsg = await reminderService.getStatus(waId, name);
+            const statusMsg = await service.getStatus(waId, name);
             await message.reply(statusMsg);
             break;
         }
         case "on": {
-            const reply = await reminderService.setEnabled(waId, true, name);
+            const reply = await service.setEnabled(waId, true, name);
             await message.reply(reply);
             break;
         }
         case "off": {
-            const reply = await reminderService.setEnabled(waId, false, name);
+            const reply = await service.setEnabled(waId, false, name);
             await message.reply(reply);
             break;
         }
         case "toggle": {
             const target = (parts[2] || "").toLowerCase();
             if (target === "sholat" || target === "shalat") {
-                const reply = await reminderService.toggleSholat(waId, undefined, name);
+                const reply = await service.toggleSholat(waId, undefined, name);
                 await message.reply(reply);
                 return;
             }
-            await message.reply("❌ Usage: `!reminder toggle sholat`");
+            if (target === "sleep" || target === "tidur") {
+                const reply = await service.toggleSleep(waId, undefined, name);
+                await message.reply(reply);
+                return;
+            }
+            await message.reply("❌ Usage: `!reminder toggle <sholat|sleep>`");
             break;
         }
         case "loc": {
@@ -47,7 +60,7 @@ export async function reminderCommand(message: Message, body: string): Promise<v
                 return;
             }
 
-            const res = await reminderService.setDirectLocation(waId, locationArg, name);
+            const res = await service.setDirectLocation(waId, locationArg, name);
             await message.reply(res.message);
             break;
         }
@@ -55,31 +68,36 @@ export async function reminderCommand(message: Message, body: string): Promise<v
             const meal = parts[2];
             const time = parts[3];
             if (!meal || !time) {
-                await message.reply("❌ Usage: `!reminder set <breakfast|lunch|dinner> <HH:mm>`");
+                await message.reply("❌ Usage: `!reminder set <breakfast|lunch|dinner|sleep> <HH:mm>`");
                 return;
             }
-            const reply = await reminderService.setTime(waId, meal, time, name);
+            const reply = await service.setTime(waId, meal, time, name);
             await message.reply(reply);
             break;
         }
         case "test": {
             const target = (parts[2] || "lunch").toLowerCase();
+            if (target === "sleep" || target === "tidur") {
+                const testMsg = service.getSleepReminderMessage(name);
+                await message.reply(`[TEST NOTIFICATION]\n\n${testMsg}`);
+                return;
+            }
             if (isValidMeal(target)) {
-                const testMsg = reminderService.getReminderMessage(target as MealType, name);
+                const testMsg = service.getReminderMessage(target as MealType, name);
                 await message.reply(`[TEST NOTIFICATION]\n\n${testMsg}`);
                 return;
             }
             if (isValidSholatPrayer(target)) {
-                const testMsg = reminderService.getSholatReminderMessage(target as SholatPrayer, name);
+                const testMsg = service.getSholatReminderMessage(target as SholatPrayer, name);
                 await message.reply(`[TEST NOTIFICATION]\n\n${testMsg}`);
                 return;
             }
-            await message.reply("❌ Usage: `!reminder test <breakfast|lunch|dinner|subuh|dzuhur|ashar|maghrib|isya>`");
+            await message.reply("❌ Usage: `!reminder test <breakfast|lunch|dinner|subuh|dzuhur|ashar|maghrib|isya|sleep>`");
             break;
         }
         case "help":
         default: {
-            await message.reply(reminderService.getHelpMessage());
+            await message.reply(service.getHelpMessage());
             break;
         }
     }

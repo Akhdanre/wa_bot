@@ -1,38 +1,42 @@
-import { prisma } from "../../infrastructure/database";
+import { prisma as defaultPrisma } from "../../infrastructure/database";
 import { MealType, ReminderProfileWithUser, SholatPrayer } from "./reminder.types";
 
 export class ReminderRepository {
+    constructor(private readonly db: any = defaultPrisma) {}
+
     async getByWaId(waId: string): Promise<ReminderProfileWithUser | null> {
-        return prisma.reminderProfile.findFirst({
+        return this.db.reminderProfile.findFirst({
             where: { user: { waId } },
             include: { user: true },
         }) as Promise<ReminderProfileWithUser | null>;
     }
 
     async getOrCreate(waId: string, name?: string): Promise<ReminderProfileWithUser> {
-        let user = await prisma.user.findUnique({
+        let user = await this.db.user.findUnique({
             where: { waId },
         });
 
         if (!user) {
-            user = await prisma.user.create({
+            user = await this.db.user.create({
                 data: { waId, name: name || null },
             });
         }
 
-        let profile = await prisma.reminderProfile.findUnique({
+        let profile = await this.db.reminderProfile.findUnique({
             where: { userId: user.id },
             include: { user: true },
         });
 
         if (!profile) {
-            profile = await prisma.reminderProfile.create({
+            profile = await this.db.reminderProfile.create({
                 data: {
                     userId: user.id,
                     enabled: true,
                     breakfastTime: "08:00",
                     lunchTime: "12:30",
                     dinnerTime: "19:00",
+                    sleepTime: "22:00",
+                    sleepEnabled: true,
                 },
                 include: { user: true },
             });
@@ -48,17 +52,29 @@ export class ReminderRepository {
             breakfastTime?: string;
             lunchTime?: string;
             dinnerTime?: string;
+            sleepTime?: string;
+            sleepEnabled?: boolean;
         }
     ): Promise<ReminderProfileWithUser> {
-        return prisma.reminderProfile.update({
+        return this.db.reminderProfile.update({
             where: { userId },
             data,
             include: { user: true },
         }) as Promise<ReminderProfileWithUser>;
     }
 
+    async markSleepSent(userId: number, sleepTime: string, dateStr: string): Promise<void> {
+        await this.db.reminderProfile.update({
+            where: { userId },
+            data: {
+                lastSentSleep: sleepTime,
+                lastSleepDate: dateStr,
+            },
+        });
+    }
+
     async markSent(userId: number, meal: MealType, dateStr: string): Promise<void> {
-        await prisma.reminderProfile.update({
+        await this.db.reminderProfile.update({
             where: { userId },
             data: {
                 lastSentMeal: meal,
@@ -68,7 +84,7 @@ export class ReminderRepository {
     }
 
     async getAllActiveProfiles(): Promise<ReminderProfileWithUser[]> {
-        return prisma.reminderProfile.findMany({
+        return this.db.reminderProfile.findMany({
             where: { enabled: true },
             include: { user: true },
         }) as Promise<ReminderProfileWithUser[]>;
@@ -82,7 +98,7 @@ export class ReminderRepository {
             kabkota?: string;
         }
     ): Promise<ReminderProfileWithUser> {
-        return prisma.reminderProfile.update({
+        return this.db.reminderProfile.update({
             where: { userId },
             data,
             include: { user: true },
@@ -90,7 +106,7 @@ export class ReminderRepository {
     }
 
     async markSholatSent(userId: number, prayer: SholatPrayer, dateStr: string): Promise<void> {
-        await prisma.reminderProfile.update({
+        await this.db.reminderProfile.update({
             where: { userId },
             data: {
                 lastSentSholat: prayer,
@@ -100,7 +116,7 @@ export class ReminderRepository {
     }
 
     async getAllActiveSholatProfiles(): Promise<ReminderProfileWithUser[]> {
-        return prisma.reminderProfile.findMany({
+        return this.db.reminderProfile.findMany({
             where: {
                 enabled: true,
                 sholatEnabled: true,

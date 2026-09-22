@@ -16,6 +16,8 @@ export class ReminderService {
         const masterStatus = profile.enabled ? "ON" : "OFF";
         const mealStatus = profile.enabled ? "ON" : "PAUSED";
         const sholatStatus = profile.enabled && profile.sholatEnabled ? "ON" : "PAUSED";
+        const sleepStatus = profile.enabled && profile.sleepEnabled ? "aktif" : "nonaktif";
+        const sleepTimeDisplay = profile.sleepTime || "22:00";
 
         const { dateStr } = getCurrentTimeWIB();
         let sholatScheduleLines = "│ • Jadwal belum tersedia\n";
@@ -48,6 +50,9 @@ export class ReminderService {
             `│\n` +
             `│ 🕌 *Sholat Reminders: ${sholatStatus}*\n` +
             sholatScheduleLines +
+            `│\n` +
+            `│ 🌙 *Sleep Reminder*\n` +
+            `│ • Tidur     : ${sleepTimeDisplay} (${sleepStatus})\n` +
             `╰─────────────────────────\n\n` +
             `_Use \`!reminder help\` to manage your schedule._`
         );
@@ -68,6 +73,15 @@ export class ReminderService {
         return newEnabled
             ? `✅ Pengingat sholat diaktifkan yaa sayang! Aku bakal ingetin kamu tiap masuk waktu sholat 💕`
             : `⏸️ Pengingat sholat dinonaktifkan.`;
+    }
+
+    async toggleSleep(waId: string, enabled?: boolean, name?: string): Promise<string> {
+        const profile = await this.repo.getOrCreate(waId, name);
+        const newEnabled = enabled !== undefined ? enabled : !profile.sleepEnabled;
+        await this.repo.updateSettings(profile.userId, { sleepEnabled: newEnabled });
+        return newEnabled
+            ? `✅ Pengingat tidur diaktifkan yaa sayang! Jangan begadang terus yaa nanti sakit 💕`
+            : `⏸️ Pengingat tidur dinonaktifkan.`;
     }
 
     async setDirectLocation(
@@ -133,25 +147,31 @@ export class ReminderService {
     }
 
     async setTime(waId: string, mealRaw: string, timeRaw: string, name?: string): Promise<string> {
-        const meal = mealRaw.toLowerCase();
-        if (!isValidMeal(meal)) {
-            return `❌ Invalid meal name "${mealRaw}". Available meals: *breakfast*, *lunch*, *dinner*.`;
-        }
-
+        const target = mealRaw.toLowerCase();
         const trimmedTime = timeRaw.trim();
         if (!isValidTime(trimmedTime)) {
-            return `❌ Invalid time "${timeRaw}". Please use 24-hour HH:mm format (e.g., *08:00*, *12:30*, *19:00*).`;
+            return `❌ Invalid time "${timeRaw}". Please use 24-hour HH:mm format (e.g., *08:00*, *12:30*, *19:00*, *22:00*).`;
+        }
+
+        if (target === "sleep" || target === "tidur") {
+            const profile = await this.repo.getOrCreate(waId, name);
+            await this.repo.updateSettings(profile.userId, { sleepTime: trimmedTime });
+            return `✅ Set *sleep* reminder to *${trimmedTime}* WIB.`;
+        }
+
+        if (!isValidMeal(target)) {
+            return `❌ Invalid meal name "${mealRaw}". Available meals: *breakfast*, *lunch*, *dinner*, *sleep*.`;
         }
 
         const profile = await this.repo.getOrCreate(waId, name);
         const updateData: Record<string, string> = {};
-        if (meal === "breakfast") updateData.breakfastTime = trimmedTime;
-        if (meal === "lunch") updateData.lunchTime = trimmedTime;
-        if (meal === "dinner") updateData.dinnerTime = trimmedTime;
+        if (target === "breakfast") updateData.breakfastTime = trimmedTime;
+        if (target === "lunch") updateData.lunchTime = trimmedTime;
+        if (target === "dinner") updateData.dinnerTime = trimmedTime;
 
         await this.repo.updateSettings(profile.userId, updateData);
 
-        return `✅ Set *${meal}* reminder to *${trimmedTime}* WIB.`;
+        return `✅ Set *${target}* reminder to *${trimmedTime}* WIB.`;
     }
 
     getReminderMessage(meal: MealType, userName?: string | null): string {
@@ -226,6 +246,17 @@ export class ReminderService {
         }
     }
 
+    getSleepReminderMessage(userName?: string | null): string {
+        const trimmedName = userName?.trim();
+        const hasName = Boolean(trimmedName);
+        const greeting = hasName ? `*${trimmedName} sayang, udah larut malam nih... 🌙💤*` : `*Sayang, udah larut malam nih... 🌙💤*`;
+
+        return (
+            `${greeting}\n\n` +
+            `Yuk simpan hp-nya, istirahat dan tidur yang cukup yaa. Jangan begadang terus nanti kamu sakit sayangku. Good night and have a sweet dream! 💕😴`
+        );
+    }
+
     getHelpMessage(): string {
         return (
             `╭─── *Reminder Help* ───\n` +
@@ -239,6 +270,9 @@ export class ReminderService {
             `│ • *!reminder set <meal> <HH:mm>*\n` +
             `│   _Atur waktu makan (breakfast, lunch, dinner)_\n` +
             `│\n` +
+            `│ • *!reminder set sleep <HH:mm>*\n` +
+            `│   _Atur waktu pengingat tidur_\n` +
+            `│\n` +
             `│ • *!reminder loc*\n` +
             `│   _Atur lokasi jadwal sholat (interaktif)_\n` +
             `│\n` +
@@ -248,8 +282,11 @@ export class ReminderService {
             `│ • *!reminder toggle sholat*\n` +
             `│   _Aktifkan/matikan pengingat sholat_\n` +
             `│\n` +
-            `│ • *!reminder test <meal|sholat>*\n` +
-            `│   _Test notifikasi (subuh, dzuhur, ashar, dll)_\n` +
+            `│ • *!reminder toggle sleep*\n` +
+            `│   _Aktifkan/matikan pengingat tidur_\n` +
+            `│\n` +
+            `│ • *!reminder test <meal|sholat|sleep>*\n` +
+            `│   _Test notifikasi (subuh, dzuhur, ashar, sleep, dll)_\n` +
             `│\n` +
             `│ Alias: *akr-reminder* didukung.\n` +
             `╰───────────────────────────`

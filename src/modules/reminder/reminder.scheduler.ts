@@ -122,6 +122,34 @@ export class ReminderScheduler {
                     }
                 }
             }
+
+            // 3. Check Sleep Reminder
+            if (profile.sleepEnabled && profile.sleepTime) {
+                const sleepToSend = this.getMatchingSleep(profile, timeStr, dateStr);
+                if (sleepToSend) {
+                    const dispatchKey = `${profile.userId}:sleep:${sleepToSend}:${dateStr}`;
+                    if (!this.inMemorySent.has(dispatchKey)) {
+                        this.inMemorySent.add(dispatchKey);
+                        try {
+                            const messageText = this.service.getSleepReminderMessage(profile.user.name);
+                            await this.sendMessage(profile.user.waId, messageText);
+                            await this.repo.markSleepSent(profile.userId, sleepToSend, dateStr);
+                            dispatchedCount++;
+                            logger.info(
+                                "ReminderScheduler",
+                                `Sent sleep reminder to ${profile.user.name || profile.user.waId}`
+                            );
+                        } catch (err) {
+                            this.inMemorySent.delete(dispatchKey);
+                            logger.error(
+                                "ReminderScheduler",
+                                `Failed to send sleep reminder to ${profile.user.waId}`,
+                                err
+                            );
+                        }
+                    }
+                }
+            }
         }
 
         return dispatchedCount;
@@ -190,6 +218,22 @@ export class ReminderScheduler {
             );
         }
 
+        return null;
+    }
+
+    private getMatchingSleep(
+        profile: ReminderProfileWithUser,
+        currentTimeStr: string,
+        currentDateStr: string
+    ): string | null {
+        if (!profile.sleepTime) return null;
+        if (profile.sleepTime === currentTimeStr) {
+            const alreadySent =
+                profile.lastSentSleep === profile.sleepTime && profile.lastSleepDate === currentDateStr;
+            if (!alreadySent) {
+                return profile.sleepTime;
+            }
+        }
         return null;
     }
 }
